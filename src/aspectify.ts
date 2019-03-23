@@ -11,9 +11,27 @@ import sharp from 'sharp'
 const stat = promisify(statCb)
 const write = promisify(writeFile)
 
-function error(message: string, code = 1) {
+function error(message: string, options = {code: 1, showHelp: false}) {
   console.error(chalk.red(message))
-  process.exit(code)
+
+  if (options.showHelp) {
+    cli.showHelp()
+  }
+
+  process.exit(options.code)
+}
+
+function numberify(value: string | number | undefined, name: string, toInt = false) {
+  if (typeof value === 'undefined') {
+    return undefined
+  }
+
+  const numValue = Number(value)
+  if (isNaN(numValue)) {
+    error(`\`${name}\` is not a valid number (${value})`)
+  }
+
+  return toInt ? Math.floor(numValue) : numValue
 }
 
 function hasFileExt(filename: string) {
@@ -29,6 +47,8 @@ const cli = meow(
       -a, --aspect       Aspect ratio to use (eg: 16:9, 4:3, 1.77) - default is 16:9
       -o, --output       Output filename (default: <filename>.<aspect>.<ext>)
       -r, --replace      Replace the original file
+      -w, --max-width    Max width of the image
+      -h, --max-height   Max height of the image
       -c, --concurrency  Maximum number of crops to perform simultaneously
       -v, --verbose      Be verbose about operations performed
 
@@ -38,6 +58,7 @@ const cli = meow(
       $ aspectify -r replace-me.webp
       $ aspectify 1.jpg 2.jpg 3.jpg
       $ aspectify -c 3 *.jpg
+      $ apectify -a 16:10 -r -w 2000 *.jpg
 `,
   {
     flags: {
@@ -65,19 +86,27 @@ const cli = meow(
         alias: 'v',
         default: false,
       },
+      maxWidth: {
+        type: 'string',
+        alias: 'w',
+      },
+      maxHeight: {
+        type: 'string',
+        alias: 'h',
+      },
     },
   },
 )
 
 const sourceFiles = cli.input
-const {replace, aspect, output, concurrency, verbose} = cli.flags
+const {replace, aspect, output, verbose} = cli.flags
+const maxWidth = numberify(cli.flags.maxWidth, '--max-width', true)
+const maxHeight = numberify(cli.flags.maxHeight, '--max-height', true)
 
-if (isNaN(parseInt(concurrency, 10))) {
-  error('Invalid concurrency specified')
-}
+const concurrency = numberify(cli.flags.concurrency, 'concurrency', true) || 1
 
 if (sourceFiles.length === 0) {
-  error('No input file specified')
+  error('No input file specified', {code: 1, showHelp: true})
 }
 
 if (replace && output) {
@@ -88,7 +117,7 @@ if (sourceFiles.length > 1 && /\.(png|jpg|webp)$/.test(output || '')) {
   error('When specifying multiple files as input, `--output` must be a directory')
 }
 
-const queue = new PQueue({concurrency: parseInt(concurrency, 10)})
+const queue = new PQueue({concurrency})
 
 let printAspect = aspect.trim().replace(/:/g, '-')
 let aspectRatio = Number(aspect)
@@ -142,7 +171,10 @@ async function processFile(fileName: string) {
     newHeight = Math.floor(width / aspectRatio)
   }
 
-  if (newWidth === width && newHeight === height) {
+  const needsConstraining =
+    (maxWidth && newWidth > maxWidth) || (maxHeight && newHeight > maxHeight)
+
+  if (!needsConstraining && newWidth === width && newHeight === height) {
     console.warn(`${sourceFilePath}: aspect ratio already ${aspect}, skipping`)
     return
   }
@@ -157,8 +189,12 @@ async function processFile(fileName: string) {
     )
   }
 
-  const cropped = image.resize(newWidth, newHeight, {fit: 'cover'})
+  const croppedImage = image.resize(newWidth, newHeight, {fit: 'cover'})
+  const resizedImage = needsConstraining
+    ? croppedImage.resize(maxWidth, maxHeight, {fit: 'inside'})
+    : croppedImage
+
   return replace
-    ? cropped.toBuffer().then(buffer => write(outPath, buffer))
-    : cropped.toFile(outPath)
+    ? resizedImage.toBuffer().then(buffer => write(outPath, buffer))
+    : resizedImage.toFile(outPath)
 }
