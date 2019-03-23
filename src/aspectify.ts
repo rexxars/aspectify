@@ -190,9 +190,13 @@ async function processFile(fileName: string) {
   }
 
   const croppedImage = image.resize(newWidth, newHeight, {fit: 'cover'})
-  const resizedImage = needsConstraining
-    ? croppedImage.resize(maxWidth, maxHeight, {fit: 'inside'})
-    : croppedImage
+  let resizedImage = croppedImage
+  if (needsConstraining) {
+    resizedImage = await croppedImage
+      .toBuffer()
+      .then(buffer => sharp(buffer))
+      .then(img => img.resize(maxWidth, maxHeight, {fit: 'inside'}))
+  }
 
   return replace
     ? resizedImage.toBuffer().then(buffer => write(outPath, buffer))
