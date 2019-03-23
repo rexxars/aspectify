@@ -1,0 +1,57 @@
+{
+  "name": "aspectify",
+  "version": "1.0.0",
+  "description": "Converts one or more images to a given aspect ratio by cropping",
+  "main": "lib/aspectify.js",
+  "typings": "./lib/aspectify.d.ts",
+  "bin": {
+    "aspectify": "./lib/aspectify.js"
+  },
+  "scripts": {
+    "dev": "tsc --watch",
+    "prebuild": "rimraf lib",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/rexxars/aspectify.git"
+  },
+  "keywords": [
+    "aspect-ratio",
+    "crop",
+    "resize",
+    "image",
+    "cli"
+  ],
+  "author": "Espen Hovlandsdal <espen@hovlandsdal.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rexxars/aspectify/issues"
+  },
+  "homepage": "https://github.com/rexxars/aspectify#readme",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "bracketSpacing": false,
+    "printWidth": 100,
+    "trailingComma": "all"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "meow": "^5.0.0",
+    "p-queue": "^4.0.0",
+    "sharp": "^0.22.0"
+  },
+  "devDependencies": {
+    "@types/meow": "^5.0.0",
+    "@types/sharp": "^0.22.0",
+    "prettier": "^1.16.4",
+    "rimraf": "^2.6.3",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.4000"
+  }
+}
