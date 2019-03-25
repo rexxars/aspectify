@@ -5,7 +5,9 @@ Requires node.js >= 8.
 
 ## Installation
 
-Not yet published to npm. Trying to wrangle my way to the `aspectify` npm module.
+```
+npm install -g aspectify
+```
 
 ## Usage
 
