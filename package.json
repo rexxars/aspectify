@@ -1,6 +1,6 @@
 {
   "name": "aspectify",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Converts one or more images to a given aspect ratio by cropping",
   "main": "lib/aspectify.js",
   "typings": "./lib/aspectify.d.ts",
