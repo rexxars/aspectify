@@ -1,7 +1,7 @@
 # aspectify
 
 Converts one or more images to a given aspect ratio by cropping.  
-Requires node.js >= 8.
+Requires node.js >= 14.
 
 ## Installation
 
